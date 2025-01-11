@@ -25,18 +25,22 @@ The following is how I (mostly) avoid getting Stripe into these awful split stat
 
 This is a quick overview of the "flow" I recommend. More detail below. Even if you don't copy my specific implementation, you should read this. _I promise all of these steps are necessary. Skipping any of them will make life unnecessarily hard_
 
-1. **FRONTEND:** "Subscribe" button should call a `"generate-stripe-checkout"` endpoint onClick
-1. **USER:** Clicks "subscribe" button on your app
-1. **BACKEND:** Create a Stripe customer
-1. **BACKEND:** Store binding between Stripe's `customerId` and your app's `userId`
-1. **BACKEND:** Create a "checkout session" for the user
+F = Frontend
+B = Backend
+U = User
+
+1. **F:** "Subscribe" button should call a `"generate-stripe-checkout"` endpoint onClick
+1. **U:** Clicks "subscribe" button on your app
+1. **B:** Create a Stripe customer
+1. **B:** Store binding between Stripe's `customerId` and your app's `userId`
+1. **B:** Create a "checkout session" for the user
    - With the return URL set to a dedicated `/success` route in your app
-1. **USER:** Makes payment, subscribes, redirects back to `/success`
-1. **FRONTEND:** On load, triggers a `syncAfterSuccess` function on backend (hit an API, server action, rsc on load, whatever)
-1. **BACKEND:** Uses `userId` to get Stripe `customerId` from KV
-1. **BACKEND:** Calls `syncStripeData` with `customerId`
-1. **FRONTEND:** After sync succeeds, redirects user to wherever you want them to be :)
-1. **BACKEND:** On [_all relevant events_](#events-i-track), calls `syncStripeData` with `customerId`
+1. **U:** Makes payment, subscribes, redirects back to `/success`
+1. **B:** On load, triggers a `syncAfterSuccess` function on backend (hit an API, server action, rsc on load, whatever)
+1. **B:** Uses `userId` to get Stripe `customerId` from KV
+1. **B:** Calls `syncStripeData` with `customerId`
+1. **F:** After sync succeeds, redirects user to wherever you want them to be :)
+1. **B:** On [_all relevant events_](#events-i-track), calls `syncStripeData` with `customerId`
 
 This might seem like a lot. That's because it is. But it's also the simplest Stripe setup I've ever seen work.
 
