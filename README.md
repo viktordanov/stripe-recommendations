@@ -1,4 +1,4 @@
-## How I Do Stripe
+# How I Do Stripe
 
 I have set up Stripe far too many times. I've never enjoyed it. I've talked to the Stripe team about the shortcomings and they say they'll fix them...eventually.
 
