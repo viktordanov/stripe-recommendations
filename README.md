@@ -272,6 +272,14 @@ export type STRIPE_SUB_CACHE =
     };
 ```
 
+## More Pro Tips
+
+Gonna slowly drop more things here as I remember them.
+
+DISABLE "CASH APP PAY". I'm convinced this is literally just used by scammers. over 90% of my cancelled transactions are Cash App Pay.
+![image](https://github.com/user-attachments/assets/c7271fa6-493c-4b1c-96cd-18904c2376ee)
+
+
 ## Things that are still your problem
 
 While I have solved a lot of stuff here, in particular the "subscription" flows, there are a few things that are still your problem. Those include...
