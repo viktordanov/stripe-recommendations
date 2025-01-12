@@ -4,6 +4,8 @@ I have set up Stripe far too many times. I've never enjoyed it. I've talked to t
 
 Until then, this is how I recommend setting up Stripe. I don't cover everything - check out [things that are still your problem](#things-that-are-still-your-problem) for clarity on what I'm NOT helping with.
 
+> If you want to stay sane implementing file uploads, check out my product [UploadThing](https://uploadthing.com/).
+
 ### Pre-requirements
 
 - TypeScript
