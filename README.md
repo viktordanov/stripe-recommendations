@@ -131,6 +131,9 @@ export async function syncStripeData(customerId: string) {
 
 ### `/success` endpoint
 
+> [!NOTE]
+> While this isn't 'necessary', there's a good chance your user will make it back to your site before the webhooks do. It's a nasty race condition to handle. Eagerly calling syncStripeData will prevent any weird states you might otherwise end up in
+
 This is the page that the user is redirected to after they complete their checkout. For the sake of simplicity, I'm going to implement it as a `get` route that redirects them. In my apps, I do this with a server component and Suspense, but I'm not going to spend the time explaining all that here.
 
 ```ts
@@ -147,9 +150,6 @@ export async function GET(req: Request) {
 ```
 
 Notice how I'm not using any of the `CHECKOUT_SESSION_ID` stuff? That's because it sucks and it encourages you to implement 12 different ways to get the Stripe state. Ignore the siren calls. Have a SINGLE `syncStripeData` function. It will make your life easier.
-
-> [!NOTE]
-> While this isn't 'necessary', there's a good chance your user will make it back to your site before the webhooks do. It's a nasty race condition to handle. Eagerly calling syncStripeData will prevent any weird states you might otherwise end up in
 
 ### `/api/stripe` (The Webhook)
 
