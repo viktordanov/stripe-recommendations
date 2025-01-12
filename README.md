@@ -15,7 +15,7 @@ Until then, this is how I recommend setting up Stripe. I don't cover everything 
 
 IMO, the biggest issue with Stripe is the "split brain" it inherently introduces to your code base. When a customer checks out, the "state of the purchase" is in Stripe. You're then expected to track the purchase in your own database via webhooks.
 
-There are [over 258 event types](https://docs.stripe.com/api/events/types). They all have different amounts of data. None of them should be trusted. It's far too easy to have a payment be failed in stripe and "subscribed" in your app.
+There are [over 258 event types](https://docs.stripe.com/api/events/types). They all have different amounts of data. The order you get them is not guaranteed. None of them should be trusted. It's far too easy to have a payment be failed in stripe and "subscribed" in your app.
 
 Trying to apply partial updates from Stripe is hellish. I recommend avoiding it entirely. My solution is simple: _a single `syncStripeData(customerId: string)` function that syncs all of the data for a given Stripe customer to your KV_.
 
@@ -148,18 +148,14 @@ export async function GET(req: Request) {
 
 Notice how I'm not using any of the `CHECKOUT_SESSION_ID` stuff? That's because it sucks and it encourages you to implement 12 different ways to get the Stripe state. Ignore the siren calls. Have a SINGLE `syncStripeData` function. It will make your life easier.
 
+> [!NOTE]
+> While this isn't 'necessary', there's a good chance your user will make it back to your site before the webhooks do. It's a nasty race condition to handle. Eagerly calling syncStripeData will prevent any weird states you might otherwise end up in
+
 ### `/api/stripe` (The Webhook)
 
 This is the part everyone hates the most. I'm just gonna dump the code and justify myself later.
 
 ```ts
-// IF YOU ARE USING NEXT.JS, MAKE SURE YOU TURN THIS ON.
-// Stripe expects the body to be "untouched" so it can verify the signature.
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
 export async function POST(req: Request) {
   const body = await req.text();
   const signature = (await headers()).get("Stripe-Signature");
@@ -189,6 +185,17 @@ export async function POST(req: Request) {
   return NextResponse.json({ received: true });
 }
 ```
+
+> [!NOTE]
+> If you are using Next.js Pages Router, make sure you turn this on. Stripe expects the body to be "untouched" so it can verify the signature.
+>
+> ```ts
+> export const config = {
+>   api: {
+>     bodyParser: false,
+>   },
+> };
+> ```
 
 ### `processEvent`
 
