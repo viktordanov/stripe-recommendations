@@ -17,7 +17,7 @@ IMO, the biggest issue with Stripe is the "split brain" it inherently introduces
 
 There are [over 258 event types](https://docs.stripe.com/api/events/types). They all have different amounts of data. The order you get them is not guaranteed. None of them should be trusted. It's far too easy to have a payment be failed in stripe and "subscribed" in your app.
 
-Trying to apply partial updates from Stripe is hellish. I recommend avoiding it entirely. My solution is simple: _a single `syncStripeData(customerId: string)` function that syncs all of the data for a given Stripe customer to your KV_.
+Trying to apply partial updates from Stripe is hellish. I recommend avoiding it entirely. My solution is simple: _a single `syncStripeDataToKV(customerId: string)` function that syncs all of the data for a given Stripe customer to your KV_.
 
 The following is how I (mostly) avoid getting Stripe into these awful split states.
 
@@ -34,9 +34,9 @@ This is a quick overview of the "flow" I recommend. More detail below. Even if y
 1. **USER:** Makes payment, subscribes, redirects back to `/success`
 1. **FRONTEND:** On load, triggers a `syncAfterSuccess` function on backend (hit an API, server action, rsc on load, whatever)
 1. **BACKEND:** Uses `userId` to get Stripe `customerId` from KV
-1. **BACKEND:** Calls `syncStripeData` with `customerId`
+1. **BACKEND:** Calls `syncStripeDataToKV` with `customerId`
 1. **FRONTEND:** After sync succeeds, redirects user to wherever you want them to be :)
-1. **BACKEND:** On [_all relevant events_](#events-i-track), calls `syncStripeData` with `customerId`
+1. **BACKEND:** On [_all relevant events_](#events-i-track), calls `syncStripeDataToKV` with `customerId`
 
 This might seem like a lot. That's because it is. But it's also the simplest Stripe setup I've ever seen work.
 
@@ -77,7 +77,7 @@ export async function GET(req: Request) {
   });
 ```
 
-### syncStripeData
+### syncStripeDataToKV
 
 This is the function that syncs all of the data for a given Stripe customer to your KV. It will be used in both your `/success` endpoint and in your `/api/stripe` webhook handler.
 
@@ -87,7 +87,7 @@ Your implementation will vary based on if you're doing subscriptions or one-time
 
 ```ts
 // The contents of this function should probably be wrapped in a try/catch
-export async function syncStripeData(customerId: string) {
+export async function syncStripeDataToKV(customerId: string) {
   // Fetch latest subscription data from Stripe
   const subscriptions = await stripe.subscriptions.list({
     customer: customerId,
@@ -132,7 +132,7 @@ export async function syncStripeData(customerId: string) {
 ### `/success` endpoint
 
 > [!NOTE]
-> While this isn't 'necessary', there's a good chance your user will make it back to your site before the webhooks do. It's a nasty race condition to handle. Eagerly calling syncStripeData will prevent any weird states you might otherwise end up in
+> While this isn't 'necessary', there's a good chance your user will make it back to your site before the webhooks do. It's a nasty race condition to handle. Eagerly calling syncStripeDataToKV will prevent any weird states you might otherwise end up in
 
 This is the page that the user is redirected to after they complete their checkout. For the sake of simplicity, I'm going to implement it as a `get` route that redirects them. In my apps, I do this with a server component and Suspense, but I'm not going to spend the time explaining all that here.
 
@@ -144,12 +144,12 @@ export async function GET(req: Request) {
     return redirect("/");
   }
 
-  await syncStripeData(stripeCustomerId);
+  await syncStripeDataToKV(stripeCustomerId);
   return redirect("/");
 }
 ```
 
-Notice how I'm not using any of the `CHECKOUT_SESSION_ID` stuff? That's because it sucks and it encourages you to implement 12 different ways to get the Stripe state. Ignore the siren calls. Have a SINGLE `syncStripeData` function. It will make your life easier.
+Notice how I'm not using any of the `CHECKOUT_SESSION_ID` stuff? That's because it sucks and it encourages you to implement 12 different ways to get the Stripe state. Ignore the siren calls. Have a SINGLE `syncStripeDataToKV` function. It will make your life easier.
 
 ### `/api/stripe` (The Webhook)
 
@@ -218,7 +218,7 @@ async function processEvent(event: Stripe.Event) {
     );
   }
 
-  return await syncStripeData(customerId);
+  return await syncStripeDataToKV(customerId);
 }
 ```
 
