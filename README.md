@@ -253,7 +253,7 @@ const allowedEvents = [
 
 ### Custom Stripe subscription type
 
-````ts
+```ts
 export type STRIPE_SUB_CACHE =
   | {
       subscriptionId: string | null;
@@ -270,8 +270,7 @@ export type STRIPE_SUB_CACHE =
   | {
       status: "none";
     };
-    ```
-````
+```
 
 ## Things that are still your problem
 
