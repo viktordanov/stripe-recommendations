@@ -19,7 +19,7 @@ IMO, the biggest issue with Stripe is the "split brain" it inherently introduces
 
 There are [over 258 event types](https://docs.stripe.com/api/events/types). They all have different amounts of data. The order you get them is not guaranteed. None of them should be trusted. It's far too easy to have a payment be failed in stripe and "subscribed" in your app.
 
-Trying to apply partial updates from Stripe is hellish. I recommend avoiding it entirely. My solution is simple: _a single `syncStripeDataToKV(customerId: string)` function that syncs all of the data for a given Stripe customer to your KV_.
+These partial updates and race conditions are obnoxious. I recommend avoiding them entirely. My solution is simple: _a single `syncStripeDataToKV(customerId: string)` function that syncs all of the data for a given Stripe customer to your KV_.
 
 The following is how I (mostly) avoid getting Stripe into these awful split states.
 
@@ -278,7 +278,6 @@ Gonna slowly drop more things here as I remember them.
 
 DISABLE "CASH APP PAY". I'm convinced this is literally just used by scammers. over 90% of my cancelled transactions are Cash App Pay.
 ![image](https://github.com/user-attachments/assets/c7271fa6-493c-4b1c-96cd-18904c2376ee)
-
 
 ## Things that are still your problem
 
