@@ -40,6 +40,53 @@ This is a quick overview of the "flow" I recommend. More detail below. Even if y
 1. **FRONTEND:** After sync succeeds, redirects user to wherever you want them to be :)
 1. **BACKEND:** On [_all relevant events_](#events-i-track), calls `syncStripeDataToKV` with `customerId`
 
+```mermaid
+sequenceDiagram
+    actor User
+    participant Frontend
+    participant Backend
+    participant Stripe
+    participant KV Store
+
+    User->>Frontend: Clicks "Subscribe" button
+    Frontend->>Backend: Call "generate-stripe-checkout"
+    
+    Backend->>KV Store: Get stripeCustomerId for user
+    KV Store-->>Backend: Return stripeCustomerId
+    
+    alt No existing stripeCustomerId
+        Backend->>Stripe: Create new customer
+        Stripe-->>Backend: Return new customerId
+        Backend->>KV Store: Store userId:stripeCustomerId binding
+    end
+    
+    Backend->>Stripe: Create checkout session
+    Stripe-->>Backend: Return checkout session
+    Backend-->>Frontend: Return checkout URL
+    Frontend->>Stripe: Redirect to checkout
+    
+    User->>Stripe: Complete payment
+    Stripe->>Frontend: Redirect to /success
+    
+    Frontend->>Backend: Call syncAfterSuccess
+    Backend->>KV Store: Get stripeCustomerId
+    KV Store-->>Backend: Return stripeCustomerId
+    
+    Backend->>Stripe: Fetch subscription data
+    Stripe-->>Backend: Return subscription data
+    Backend->>KV Store: Sync stripe data
+    
+    Backend-->>Frontend: Sync complete
+    Frontend->>Frontend: Redirect to destination
+    
+    Note over Stripe,Backend: Parallel: Webhook Flow
+    Stripe-)Backend: Send webhook events
+    Backend->>Stripe: Verify webhook signature
+    Backend->>Stripe: Fetch updated customer data
+    Stripe-->>Backend: Return customer data
+    Backend->>KV Store: Sync stripe data
+```
+
 This might seem like a lot. That's because it is. But it's also the simplest Stripe setup I've ever seen work.
 
 Let's go into the details on the important parts here.
